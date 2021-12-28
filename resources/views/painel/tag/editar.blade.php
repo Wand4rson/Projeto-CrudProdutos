@@ -23,7 +23,7 @@
 
             <div class="form-group mb-2">
                 <label for="nome">Nome da Tag</label>
-                <input type="text" name="nome" class="form-control" value="{{old('nome')}}" required>  
+                <input type="text" name="nome" class="form-control" value="{{$tag->nome}}" required>  
             </div>
 
             <button type="submit" class="btn btn-primary">Editar</button>

@@ -32,6 +32,8 @@ Route::get('/login/usuario/editar', [AdminController::class,'showFormEditarUsuar
 Route::post('/login/usuario/editar',[AdminController::class,'showFormEditarUsuarioAction'])->name('usuario.editar.salvar');
 
 //Produto
+Route::get('/painel/produto/listar',[AdminController::class, 'showListarProdutos'])->name('painel.produto.listar');
+Route::get('/painel/produto/listarprodutos/{id}',[AdminController::class, 'showListarProdutosTags'])->name('painel.produto.listarprodutostag');
 Route::get('/painel/produto/cadastro',[AdminController::class, 'showFormNovoProduto'])->name('painel.produto.cadastro');
 Route::post('/painel/produto/cadastro',[AdminController::class, 'showFormNovoProdutoAction'])->name('painel.produto.cadastroaction');
 Route::get('/painel/produto/editar/{id}',[AdminController::class, 'showFormEditarProduto'])->name('painel.produto.editar');
@@ -39,6 +41,8 @@ Route::post('/painel/produto/editar/{id}',[AdminController::class, 'showFormEdit
 Route::get('/painel/produto/remover/{id}',[AdminController::class, 'showRemoverProdutoAction'])->name('painel.produto.remover');
 
 //Tag
+Route::get('/painel/tag/listar',[AdminController::class, 'showListarTags'])->name('painel.tag.listar');
+Route::get('/painel/tag/listarprodutos/{id}',[AdminController::class, 'showListarTagsProdutos'])->name('painel.tag.listarprodutos');
 Route::get('/painel/tag/cadastro',[AdminController::class, 'showFormNovoTag'])->name('painel.tag.cadastro');
 Route::post('/painel/tag/cadastro',[AdminController::class, 'showFormNovoTagAction'])->name('painel.tag.cadastroaction');
 Route::get('/painel/tag/editar/{id}',[AdminController::class, 'showFormEditarTag'])->name('painel.tag.editar');

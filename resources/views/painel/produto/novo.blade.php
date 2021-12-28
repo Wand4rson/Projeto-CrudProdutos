@@ -24,7 +24,19 @@
                 <label for="nome">Nome do Produto</label>
                 <input type="text" name="nome" class="form-control" value="{{old('nome')}}" required>  
             </div>
-            
+
+            <br/>
+            <p class="text-muted">Selecione as Tags do Produto</p>            
+            @foreach($tags as $tag)
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="tag[{{$tag->id}}]" name="tag[{{$tag->id}}]">
+                <label class="form-check-label" for="tag[{{$tag->id}}]">
+                    {{$tag->nome}}
+                </label>
+            </div>
+            @endforeach            
+            <br/>
+
             <button type="submit" class="btn btn-primary">Salvar</button>
 
         </form>

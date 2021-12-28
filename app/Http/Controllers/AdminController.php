@@ -9,6 +9,7 @@ use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
@@ -68,28 +69,128 @@ class AdminController extends Controller
     //Exibe o Painel Admin Principal
     public function dashboard()
     {
-        //Carrega Painel Dasboard com Dados de Tags Estatisticas
-        return view('painel.dashboard');
+        
+        //Listar a Nuvem de Tags e Também a qtde de produtos por TAG do usuario
+        $tags = DB::select(DB::raw('SELECT                
+            produto_tag.tag_id,
+            tag.nome AS nometag,
+            COUNT(*) AS produtos_count
+        FROM
+            produto_tag produto_tag 
+        INNER JOIN tag tag ON(tag.id = produto_tag.tag_id)
+        WHERE tag.user_id=:userid GROUP BY produto_tag.tag_id, tag.nome'),
+        array('userid'=>Auth::user()->id));        
+
+
+        return view('painel.dashboard', ['tags'=>$tags]);
     }
 
 
+    public function showListarTags()
+    {
+        $tags = Tag::paginate(15);
+        return view('painel.tag.listar', ['tags'=>$tags]);
+    }
+
+    public function showListarProdutos()
+    {
+        $produtos = Produto::paginate(15);
+        return view('painel.produto.listar', ['produtos'=>$produtos]);
+    }
+
+    //Exibir View que lista todos os produtos que estão Vinculados a Tag Selecionada
+    public function showListarTagsProdutos($idTag)
+    {
+        $tag = Tag::where('id', $idTag)->where('user_id', Auth::user()->id)->first();
+
+        if($tag)
+        {
+            
+            $produtos = DB::select('SELECT
+                produto_tag.produto_id,
+                produto_tag.tag_id,
+                produto.nome AS nomeproduto,
+                tag.nome AS nometag
+            FROM
+                produto_tag produto_tag 
+            INNER JOIN produto produto ON (produto.id = produto_tag.produto_id)
+            INNER JOIN tag tag ON(tag.id = produto_tag.tag_id)
+            WHERE produto_tag.tag_id =:tagid', ['tagid' => $idTag]);
+        
+        
+            return view('painel.tag.listarprodutos', ['produtos'=>$produtos]);
+        }
+        else
+        {
+            return redirect()->route('painel.tag.listar')->with(['ErrorDashboard'=>'Tag selecionado não existe.']);
+        }   
+    }
+
+    //Exibir View que lista todos as Tags vinculadas ao produto selecionado
+    public function showListarProdutosTags($idProd)
+    {
+        $produto = Produto::where('id', $idProd)->where('user_id', Auth::user()->id)->first();
+
+        if($produto)
+        {
+            
+            $tags = DB::select('SELECT
+                produto_tag.produto_id,
+                produto_tag.tag_id,
+                produto.nome AS nomeproduto,
+                tag.nome AS nometag
+            FROM
+                produto_tag produto_tag 
+            INNER JOIN produto produto ON (produto.id = produto_tag.produto_id)
+            INNER JOIN tag tag ON(tag.id = produto_tag.tag_id)
+            WHERE produto_tag.produto_id =:produtoid', ['produtoid' => $idProd]);
+        
+        
+            return view('painel.produto.listarprodutos', ['tags'=>$tags]);
+        }
+        else
+        {
+            return redirect()->route('painel.produto.listar')->with(['ErrorDashboard'=>'Produto selecionado não existe.']);
+        }   
+    }
+
+    
+
     public function showFormNovoProduto()
     {
-        return view('painel.produto.novo');
+        $tags = Tag::all();
+        return view('painel.produto.novo', ['tags'=>$tags]);
     }
     
     public function showFormNovoProdutoAction(Request $request)
     {
         $validacao = $request->validate([           
             'nome' => ['required','min:3'],
-        ]);
-        
+        ]);           
+
         $produto = new Produto();
         $produto->nome = $request->input('nome');
         $produto->user_id = Auth::user()->id;
         $produto->save();
+        $idProdutoGravado = $produto->id; //recupera o id do novo produto gravado
 
-        return redirect()->route('painel.dashboard');
+        //Grava Tags
+        if($request->has('tag')) 
+        {
+            if (count($request->tag) > 0)
+            {
+                foreach($request->tag as $key => $tag)
+                {
+                    $prodtag = new ProdutoTag();
+                    $prodtag->produto_id = $idProdutoGravado;
+                    $prodtag->tag_id = $key;
+                    $prodtag->save();
+                }
+
+            }
+        }
+
+        return redirect()->route('painel.produto.listar');
 
     }
 
@@ -99,12 +200,46 @@ class AdminController extends Controller
        
         if($produto)
         {
+            
+
+            //Todas as Tags Disponiveis no Cadastro de Tags
+            $tags = Tag::all(); 
+
+            //Todas as Tags já selecionadas pelo no Produto
+            $tagsEmUso = ProdutoTag::where('produto_id', $idProd)->get();
+
+            
+            //Compara as tags existentes e se ja estiver marcada, seta como checked
+            foreach($tags as $key => $tag)
+            {        
+                
+                $tagEstaEmUso = ProdutoTag::where('produto_id', $idProd)->where('tag_id', $tag->id)->first();
+                
+                if($tagEstaEmUso)
+                {
+                    
+                   
+                    if($tagEstaEmUso->tag_id === $tag->id)
+                    {
+                        $tag['checked'] = 'checked';
+                    }
+                    else
+                    {
+                        $tag['checked'] = '';
+                    }
+                    
+                  
+                }
+
+            }
+
+
             //Existe            
-            return view('painel.produto.editar', ['produto'=>$produto]);
+            return view('painel.produto.editar', ['produto'=>$produto, 'tags'=>$tags]);
         }
         else
         {
-            return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Produto selecionado não existe.']);
+            return redirect()->route('painel.produto.listar')->with(['ErrorDashboard'=>'Produto selecionado não existe.']);
         }        
     }
 
@@ -117,16 +252,44 @@ class AdminController extends Controller
             $validacao = $request->validate([           
                 'nome' => ['required','min:3'],                
             ]);
-                        
+                                  
+
             //Existe então edita      
             $produto->nome = $request->input('nome');            
             $produto->save();
 
-            return redirect()->route('painel.dashboard');
+
+
+            //1º remove todas as existentes e insere as novas
+            $tagsAntigas =  ProdutoTag::where('produto_id', $id)->get();
+            foreach($tagsAntigas as $remove)
+            {
+                    $remove->delete();
+            }
+            
+            //Grava Tags Novas
+            if($request->has('tag')) 
+            {
+                if (count($request->tag) > 0)
+                {
+                    
+                    //2º Insere as novas
+                    foreach($request->tag as $key => $tag)
+                    {
+                        $prodtag = new ProdutoTag();
+                        $prodtag->produto_id = $id;
+                        $prodtag->tag_id = $key;
+                        $prodtag->save();
+                    }
+
+                }
+            }
+
+            return redirect()->route('painel.produto.listar');
         }
         else
         {
-            return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Produto selecionado não existe.']);
+            return redirect()->route('painel.produto.listar')->with(['ErrorDashboard'=>'Produto selecionado não existe.']);
         }
 
     }
@@ -144,7 +307,7 @@ class AdminController extends Controller
 
             //2º
             if (count($produtoEmUso) > 0) {
-                return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Produto selecionado em uso não pode remover.']);
+                return redirect()->route('painel.produto.listar')->with(['ErrorDashboard'=>'Produto selecionado em uso não pode remover.']);
             }
             
             //3º Tag não está em uso Remover a TAG Remove
@@ -155,11 +318,11 @@ class AdminController extends Controller
 
 
             //6-Recarrega Listagem
-            return redirect()->route('painel.dashboard');
+            return redirect()->route('painel.produto.listar');
         }
         else
         {
-            return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Produto selecionado não existe.']);
+            return redirect()->route('painel.produto.listar')->with(['ErrorDashboard'=>'Produto selecionado não existe.']);
         }
     }
     
@@ -180,7 +343,7 @@ class AdminController extends Controller
         $tag->user_id = Auth::user()->id;
         $tag->save();
 
-        return redirect()->route('painel.dashboard');
+        return redirect()->route('painel.tag.listar');
 
     }
 
@@ -195,7 +358,7 @@ class AdminController extends Controller
         }
         else
         {
-            return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Tag selecionado não existe.']);
+            return redirect()->route('painel.tag.listar')->with(['ErrorDashboard'=>'Tag selecionado não existe.']);
         }        
     }
 
@@ -213,11 +376,11 @@ class AdminController extends Controller
             $tag->nome = $request->input('nome');            
             $tag->save();
 
-            return redirect()->route('painel.dashboard');
+            return redirect()->route('painel.tag.listar');
         }
         else
         {
-            return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Tag selecionado não existe.']);
+            return redirect()->route('painel.tag.listar')->with(['ErrorDashboard'=>'Tag selecionado não existe.']);
         }
 
     }
@@ -235,7 +398,7 @@ class AdminController extends Controller
 
             //2º
             if (count($tagEmUso) > 0) {
-                return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Tag selecionada em uso não pode remover.']);
+                return redirect()->route('painel.tag.listar')->with(['ErrorDashboard'=>'Tag selecionada em uso não pode remover.']);
             }
             
             //3º Tag não está em uso Remover a TAG Remove
@@ -246,11 +409,11 @@ class AdminController extends Controller
 
 
             //6-Recarrega Listagem
-            return redirect()->route('painel.dashboard');
+            return redirect()->route('painel.tag.listar');
         }
         else
         {
-            return redirect()->route('painel.dashboard')->with(['ErrorDashboard'=>'Tag selecionada não existe.']);
+            return redirect()->route('painel.tag.listar')->with(['ErrorDashboard'=>'Tag selecionada não existe.']);
         }
     }
     

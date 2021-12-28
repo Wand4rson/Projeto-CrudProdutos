@@ -26,7 +26,7 @@
                 <ul class="navbar-nav ml-auto">
                                                        
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{{route('painel.produto.cadastro')}}"><i class="fas fa-edit"></i> Novo Produto</a>
+                        <a class="nav-link text-white" href="{{route('painel.produto.listar')}}"><i class="fas fa-edit"></i> Listar Produtos</a>
                     </li>                  
 
                     <li class="nav-item">
@@ -34,7 +34,7 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{{route('painel.tag.cadastro')}}"><i class="fas fa-edit"></i> Nova TAG</a>
+                        <a class="nav-link text-white" href="{{route('painel.tag.listar')}}"><i class="fas fa-edit"></i> Listar TAG</a>
                     </li> 
 
                     <li class="nav-item">
