@@ -100,12 +100,13 @@ CREATE TABLE IF NOT EXISTS `produto` (
   PRIMARY KEY (`id`),
   KEY `produto_user_id_foreign` (`user_id`),
   CONSTRAINT `produto_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Copiando dados para a tabela projcrudprod.produto: ~1 rows (aproximadamente)
+-- Copiando dados para a tabela projcrudprod.produto: ~0 rows (aproximadamente)
 /*!40000 ALTER TABLE `produto` DISABLE KEYS */;
 INSERT INTO `produto` (`id`, `nome`, `user_id`, `created_at`, `updated_at`) VALUES
-	(1, 'Bolacha Recheada', 1, '2021-12-27 00:31:03', '2021-12-27 00:31:03');
+	(5, 'Sem Tags', 1, '2021-12-28 03:01:27', '2021-12-28 03:01:27'),
+	(6, 'Com tag', 1, '2021-12-28 03:04:15', '2021-12-28 03:04:15');
 /*!40000 ALTER TABLE `produto` ENABLE KEYS */;
 
 -- Copiando estrutura para tabela projcrudprod.produto_tag
@@ -121,10 +122,13 @@ CREATE TABLE IF NOT EXISTS `produto_tag` (
   KEY `produto_tag_tag_id_foreign` (`tag_id`),
   CONSTRAINT `produto_tag_produto_id_foreign` FOREIGN KEY (`produto_id`) REFERENCES `produto` (`id`),
   CONSTRAINT `produto_tag_tag_id_foreign` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Copiando dados para a tabela projcrudprod.produto_tag: ~0 rows (aproximadamente)
 /*!40000 ALTER TABLE `produto_tag` DISABLE KEYS */;
+INSERT INTO `produto_tag` (`id`, `produto_id`, `tag_id`, `created_at`, `updated_at`) VALUES
+	(2, 5, 1, '2021-12-28 03:04:03', '2021-12-28 03:04:03'),
+	(3, 6, 1, '2021-12-28 03:04:15', '2021-12-28 03:04:15');
 /*!40000 ALTER TABLE `produto_tag` ENABLE KEYS */;
 
 -- Copiando estrutura para tabela projcrudprod.tag
@@ -140,10 +144,10 @@ CREATE TABLE IF NOT EXISTS `tag` (
   CONSTRAINT `tag_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Copiando dados para a tabela projcrudprod.tag: ~1 rows (aproximadamente)
+-- Copiando dados para a tabela projcrudprod.tag: ~3 rows (aproximadamente)
 /*!40000 ALTER TABLE `tag` DISABLE KEYS */;
 INSERT INTO `tag` (`id`, `nome`, `user_id`, `created_at`, `updated_at`) VALUES
-	(1, 'Grupo Bolachas', 1, '2021-12-27 00:31:20', '2021-12-27 00:31:20');
+	(1, 'Tag 01', 1, '2021-12-28 03:01:42', '2021-12-28 03:01:42');
 /*!40000 ALTER TABLE `tag` ENABLE KEYS */;
 
 -- Copiando estrutura para tabela projcrudprod.users
@@ -161,10 +165,10 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `users_email_unique` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Copiando dados para a tabela projcrudprod.users: ~1 rows (aproximadamente)
+-- Copiando dados para a tabela projcrudprod.users: ~0 rows (aproximadamente)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-	(1, 'Wanderson', 'wanderson@hotmail.com', NULL, '$2y$10$EMfpv1nfDXeMn0znxmzYuObY4dXlYggp1chBtUZFcNZa9jnABgyIu', NULL, '2021-12-27 00:30:46', '2021-12-27 00:30:46');
+	(1, 'Wanderson', 'wanderson@hotmail.com', NULL, '$2y$10$QqwrmqUN1HV/gmphPuFoBuiatIaqNmZCNylWZUxR4rTNtfcJRoqHa', NULL, '2021-12-28 02:58:23', '2021-12-28 02:58:23');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
